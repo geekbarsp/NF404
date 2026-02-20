@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 NOT FOUND</title>
+    <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="custom-cursor"></div>
+<div class="bg-overlay"></div>
+
+<div class="profile-card" id="profileCard">
+    <div class="avatar-wrap">
+        <img src="" alt="Profile Avatar" class="avatar-img clickable-avatar" id="profAvatar">
+        <div class="status-dot-overlay" id="profDot"></div>
+    </div>
+    <div class="prof-user" id="profUsername">USER</div>
+    <div class="prof-activity" id="profActivity"></div>
+    
+    <div class="prof-socials">
+        <button class="social-btn" aria-label="YouTube"><i class="fab fa-youtube"></i></button>
+        <button class="social-btn" aria-label="GitHub"><i class="fab fa-github"></i></button>
+    </div>
+
+    <a href="#" target="_blank" rel="noopener noreferrer" class="discord-btn" id="profLink">
+        <i class="fas fa-bolt"></i> DISCORD PROFILE
+    </a>
+</div>
+
+<main class="main-wrapper">
+    <header class="header-section">
+        <h1 class="main-title">404 NOT FOUND</h1>
+    </header>
+
+    <section class="shelf-container">
+        <div class="shelf-label-left line-label">404</div>
+        <div class="glass-container">
+            <div class="avatar-grid" id="staff-row"></div>
+        </div>
+    </section>
+
+    <div class="divider-section">
+        <span class="star-label line-label">☆☆☆</span>
+    </div>
+
+    <section class="shelf-container">
+        <div class="glass-container">
+            <div class="avatar-grid" id="member-row"></div>
+        </div>
+    </section>
+</main>
+
+<div class="mini-player">
+    <div class="player-content">
+        <img src="assets/cover.jpg" class="mini-cover" alt="Album Cover" onerror="this.src='assets/123.jpg'">
+        <div class="mini-info">
+            <div class="mini-title">Panadero 2</div>
+            <div class="mini-artist">Hev Abi x LK</div>
+            <div class="mini-time"><span id="currTime">0:00</span> / <span id="totTime">0:00</span></div>
+        </div>
+        <div class="mini-controls">
+            <button id="playBtn" aria-label="Play or Pause"><i class="fas fa-play"></i></button>
+            <div class="volume-wrapper">
+                <button id="muteBtn" aria-label="Volume"><i class="fas fa-volume-up"></i></button>
+                <div class="volume-popup" id="volPopup">
+                    <input type="range" id="volumeSlider" aria-label="Volume Control" min="0" max="1" step="0.01" value="0.5">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="player-progress-bg" id="progressBg">
+        <div class="player-progress-bar" id="progress"></div>
+    </div>
+</div>
+
+<audio id="bgMusic" src="assets/panadero.mp3" loop preload="metadata"></audio>
+
+<script src="scripthof.js"></script>
+</body>
+</html>
