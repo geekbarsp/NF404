@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.RPF | OFFICIAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root { --accent: #ffffff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: none !important; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background: url("assets/Jrpf/jay.gif") center center / cover no-repeat fixed;
+            background-color: #050505;
+            color: white;
+            height: 100vh;
+        }
+
+        #custom-cursor {
+            width: 22px; height: 28px; background: #fff;
+            position: fixed; top: 0; left: 0;
+            pointer-events: none; z-index: 10000;
+            clip-path: polygon(0% 0%, 100% 70%, 35% 70%, 35% 100%);
+        }
+
+        .dust {
+            position: fixed; background: #fff; pointer-events: none; z-index: 9999;
+            border-radius: 1px; animation: particleFade 1.2s ease-out forwards;
+        }
+
+        @keyframes particleFade {
+            0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 0.8; }
+            100% { transform: translate(var(--dx), var(--dy)) rotate(var(--dr)) scale(0); opacity: 0; }
+        }
+
+        .bg-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: -1; }
+
+        .scanlines {
+            position: fixed; inset: 0;
+            background: repeating-linear-gradient(to bottom, rgba(0, 255, 0, 0.03) 0px, rgba(0, 255, 0, 0.03) 1px, transparent 2px, transparent 4px);
+            pointer-events: none; z-index: 2;
+        }
+
+        /* MAIN UI */
+        .container { display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .ui-panel {
+            padding: 60px; background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px); border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.1); text-align: center;
+            z-index: 10;
+        }
+
+        .name {
+            font-family: 'UnifrakturCook', cursive; font-size: 6rem;
+            color: #707070; text-shadow: 0 0 10px #fff;
+            transition: 0.4s; margin-bottom: 10px;
+        }
+        .name:hover { color: #fff; transform: scale(1.05); text-shadow: 0 0 30px #fff; }
+
+        .subtitle { letter-spacing: 5px; color: #888; font-size: 0.9rem; margin-bottom: 30px; text-transform: uppercase; }
+        
+        .socials { display: flex; justify-content: center; gap: 20px; }
+        .social-link {
+            width: 65px; height: 65px; border: 1px solid #fff; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; text-decoration: none; transition: 0.3s; font-size: 1.5rem;
+        }
+        .social-link:hover { background: #fff; color: #000; transform: translateY(-5px); }
+
+        /* MUSIC BOX (EXACTLY AS REFERENCE) */
+        .music-player {
+            position: fixed; bottom: 25px; right: 25px;
+            display: flex; align-items: center; gap: 15px;
+            padding: 12px 20px; background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px); border-radius: 40px;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6); z-index: 100;
+        }
+        .music-icon { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; }
+        .music-icon img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .music-details { display: flex; flex-direction: column; font-size: 0.8rem; color: #ccc; min-width: 120px; }
+        .music-title { font-weight: bold; color: white; font-size: 0.85rem; }
+        
+        .seek-container { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+        .time-display { font-size: 0.7rem; color: #888; white-space: nowrap; }
+        .seek-slider { width: 100px; height: 4px; accent-color: #fff; }
+
+        .music-controls { display: flex; align-items: center; gap: 10px; }
+        .music-controls button { background: none; border: none; color: white; font-size: 1.1rem; cursor: none !important; }
+
+        .volume-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; }
+        .volume-popout {
+            display: none; position: absolute; bottom: 50px;
+            background: rgba(0, 0, 0, 0.8); padding: 15px 8px;
+            border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+            height: 120px; z-index: 101;
+        }
+        .volume-popout.active { display: flex; }
+        .volume-slider { appearance: slider-vertical; width: 4px; height: 100%; accent-color: #fff; }
+
+        .back-btn {
+            position: fixed; top: 30px; left: 30px;
+            color: #fff; text-decoration: none; font-size: 0.8rem;
+            letter-spacing: 2px; border-bottom: 1px solid #fff;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="custom-cursor"></div>
+    <div class="bg-overlay"></div>
+    <div class="scanlines"></div>
+    
+    <a href="index.html" class="back-btn">RETURN TO HALL</a>
+
+    <div class="container">
+        <div class="ui-panel">
+            <h1 class="name">𝓙𝓾𝓵𝓼</h1>
+            <p class="subtitle">n/a</p>
+            <div class="socials">
+                <a href="https://www.youtube.com/@Migo.xxyzzz" target="_blank" class="social-link"><i class="fab fa-youtube"></i></a>
+                <a href="https://discord.com/users/1420390943517048923" target="_blank" class="social-link"><i class="fab fa-discord"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="music-player">
+        <div class="music-icon"><img src="assets/Jrpf/jayy.jpg" alt="cover"></div>
+        <div class="music-details">
+            <div class="music-title">DI NA SALUHIN - Hev Abi</div>
+            <div class="seek-container">
+                <input type="range" id="seekSlider" class="seek-slider" value="0" min="0" step="1">
+                <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+            </div>
+        </div>
+        <div class="music-controls">
+            <button id="playBtn"><i class="fas fa-play"></i></button>
+            <div class="volume-wrapper">
+                <div class="volume-popout" id="volumePopout">
+                    <input type="range" id="volumeSlider" class="volume-slider" min="0" max="1" step="0.01" value="0.3" orient="vertical">
+                </div>
+                <button id="volumeBtn"><i class="fas fa-volume-up"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="bgMusic" loop src="assets/Jrpf/jayyy.mp3"></audio>
+
+    <script>
+        const cursor = document.getElementById('custom-cursor');
+        const audio = document.getElementById('bgMusic');
+        const playBtn = document.getElementById('playBtn');
+        const seekSlider = document.getElementById('seekSlider');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const volumeBtn = document.getElementById('volumeBtn');
+        const volumePopout = document.getElementById('volumePopout');
+        const volumeSlider = document.getElementById('volumeSlider');
+        let started = false;
+
+        // Cursor & Dust
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+            if(Math.random() > 0.8) createDust(e.clientX, e.clientY);
+        });
+
+        function createDust(x, y) {
+            const dust = document.createElement('div');
+            dust.className = 'dust';
+            const size = Math.random() * 5 + 2;
+            dust.style.width = size + 'px'; dust.style.height = size + 'px';
+            dust.style.left = x + 'px'; dust.style.top = y + 'px';
+            dust.style.setProperty('--dx', (Math.random() - 0.5) * 50 + 'px');
+            dust.style.setProperty('--dy', (Math.random() * 50) + 'px');
+            dust.style.setProperty('--dr', (Math.random() * 360) + 'deg');
+            document.body.appendChild(dust);
+            setTimeout(() => dust.remove(), 1000);
+        }
+
+        // Global Click to Start
+        document.addEventListener('click', (e) => {
+            if (!started) {
+                started = true;
+                audio.play();
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            }
+            // Close volume popout if clicking elsewhere
+            if (!volumePopout.contains(e.target) && e.target !== volumeBtn) {
+                volumePopout.classList.remove('active');
+            }
+        });
+
+        // Music Controls
+        function formatTime(secs) {
+            const mins = Math.floor(secs / 60);
+            const s = Math.floor(secs % 60);
+            return `${mins}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        playBtn.onclick = (e) => {
+            e.stopPropagation();
+            if(audio.paused) { audio.play(); playBtn.innerHTML = '<i class="fas fa-pause"></i>'; }
+            else { audio.pause(); playBtn.innerHTML = '<i class="fas fa-play"></i>'; }
+        };
+
+        volumeBtn.onclick = (e) => {
+            e.stopPropagation();
+            volumePopout.classList.toggle('active');
+        };
+
+        volumeSlider.oninput = () => { audio.volume = volumeSlider.value; };
+
+        audio.onloadedmetadata = () => { seekSlider.max = audio.duration; };
+
+        audio.ontimeupdate = () => {
+            seekSlider.value = audio.currentTime;
+            timeDisplay.innerText = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration || 0)}`;
+        };
+
+        seekSlider.oninput = () => { audio.currentTime = seekSlider.value; };
+    </script>
+</body>
+</html>

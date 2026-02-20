@@ -1,5 +1,5 @@
 const shelf404Ids = ["456699600154263555", "306976202755801091", "1420390943517048923", "246408830068588547"]; 
-const starShelfIds = ["1231035322108874795", "810573992746024980", "642783529419407374"]; 
+const starShelfIds = ["1231035322108874795", "810573992746024980", "642783529419407374", "748544305706041385"]; 
 
 // --- NEW: REDIRECT MAPPING ---
 const userMapping = {
@@ -9,7 +9,8 @@ const userMapping = {
     "456699600154263555": "jrpf",
     "306976202755801091": "spaggy",
     "642783529419407374": "yema",
-    "246408830068588547": "thati"
+    "246408830068588547": "thati",
+    "748544305706041385": "juls"
 };
 
 const fallbackNames = {
@@ -19,7 +20,8 @@ const fallbackNames = {
     "456699600154263555": "J.rpf",
     "306976202755801091": "Spaggy",
     "642783529419407374": "yema",
-    "246408830068588547": "thati"
+    "246408830068588547": "thati",
+    "748544305706041385": "juls"
 };
 
 const statusColors = { 
@@ -105,7 +107,7 @@ function renderUserCard(id, userData, containerId, delayIndex) {
     card.style.cursor = 'pointer';
     card.addEventListener('click', () => {
         const slug = userMapping[id];
-        if (slug) window.location.href = `${slug}.html`;
+        if (slug) window.location.href = `./${slug}`;
     });
 
     card.addEventListener('mouseenter', (e) => {
@@ -142,7 +144,7 @@ function openProfile(id, data, x, y) {
     // --- REDIRECT ON POPUP CLICK FOR EVERYONE ---
     avatarImg.onclick = () => {
         const slug = userMapping[id];
-        if (slug) window.location.href = `${slug}.html`;
+        if (slug) window.location.href = `./${slug}`;
     };
 
     let activityHtml = `<div class="status-text-item" style="color: #666;">No current activity</div>`;
