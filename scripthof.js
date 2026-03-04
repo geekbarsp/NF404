@@ -107,7 +107,7 @@ function renderUserCard(id, userData, containerId, delayIndex) {
     card.style.cursor = 'pointer';
     card.addEventListener('click', () => {
         const slug = userMapping[id];
-        if (slug) window.location.href = `./${slug}`;
+        if (slug) window.location.href = `${slug}.html`;
     });
 
     card.addEventListener('mouseenter', (e) => {
@@ -144,7 +144,7 @@ function openProfile(id, data, x, y) {
     // --- REDIRECT ON POPUP CLICK FOR EVERYONE ---
     avatarImg.onclick = () => {
         const slug = userMapping[id];
-        if (slug) window.location.href = `./${slug}`;
+        if (slug) window.location.href = `${slug}.html`;
     };
 
     let activityHtml = `<div class="status-text-item" style="color: #666;">No current activity</div>`;
