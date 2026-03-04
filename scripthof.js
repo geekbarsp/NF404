@@ -1,7 +1,10 @@
+// --- 1. CONFIGURATION & IDS ---
 const shelf404Ids = ["456699600154263555", "306976202755801091", "1420390943517048923", "246408830068588547"]; 
-const starShelfIds = ["1231035322108874795", "810573992746024980", "642783529419407374", "748544305706041385"]; 
+const starShelfIds = ["1231035322108874795", "810573992746024980", "642783529419407374", "748544305706041385", "898231654466846760", "769880845179682826"]; 
+const memberShelfIds = ["1231035322108874795", "810573992746024980", "642783529419407374", "748544305706041385"];
 
-// --- NEW: REDIRECT MAPPING ---
+const allUniqueIds = [...new Set([...shelf404Ids, ...starShelfIds, ...memberShelfIds])];
+
 const userMapping = {
     "1420390943517048923": "migo",
     "1231035322108874795": "shoti",
@@ -10,7 +13,9 @@ const userMapping = {
     "306976202755801091": "spaggy",
     "642783529419407374": "yema",
     "246408830068588547": "thati",
-    "748544305706041385": "juls"
+    "748544305706041385": "juls",
+    "898231654466846760": "aid",
+    "769880845179682826": "nath"
 };
 
 const fallbackNames = {
@@ -21,7 +26,9 @@ const fallbackNames = {
     "306976202755801091": "Spaggy",
     "642783529419407374": "yema",
     "246408830068588547": "thati",
-    "748544305706041385": "juls"
+    "748544305706041385": "juls",
+    "898231654466846760": "aid",
+    "769880845179682826": "nath"
 };
 
 const statusColors = { 
@@ -31,11 +38,54 @@ const statusColors = {
     offline: 'var(--status-offline)' 
 };
 
-const cursor = document.getElementById('custom-cursor');
-const profCard = document.getElementById('profileCard');
+// --- 2. WEBSOCKET LOGIC (LANYARD) ---
+let socket;
+let heartbeatInterval;
+let globalDataMap = {};
 
-// --- CURSOR & DUST ---
+function connectLanyard() {
+    socket = new WebSocket('wss://api.lanyard.rest/socket');
+
+    socket.onopen = () => console.log('Lanyard Connected');
+
+    socket.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+
+        // Opcode 1: Hello - Start Heartbeat and Initialize
+        if (msg.op === 1) {
+            heartbeatInterval = setInterval(() => {
+                socket.send(JSON.stringify({ op: 3 }));
+            }, msg.d.heartbeat_interval);
+
+            socket.send(JSON.stringify({
+                op: 2,
+                d: { subscribe_to_ids: allUniqueIds }
+            }));
+        }
+
+        // Opcode 0: Event
+        if (msg.op === 0) {
+            if (msg.t === 'INIT_STATE') {
+                globalDataMap = msg.d;
+                initializeUI();
+            } else if (msg.t === 'PRESENCE_UPDATE') {
+                const userId = msg.d.discord_user.id;
+                globalDataMap[userId] = msg.d;
+                updateUserUI(userId, msg.d);
+            }
+        }
+    };
+
+    socket.onclose = () => {
+        clearInterval(heartbeatInterval);
+        setTimeout(connectLanyard, 5000);
+    };
+}
+
+// --- 3. CUSTOM CURSOR & DUST ---
+const cursor = document.getElementById('custom-cursor');
 let lastDustTime = 0;
+
 document.addEventListener('mousemove', (e) => {
     cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
     const now = Date.now();
@@ -60,27 +110,25 @@ function createDust(x, y) {
     setTimeout(() => dust.remove(), 1200);
 }
 
-// --- DATA FETCHING ---
-async function initializeHallOfFame() {
-    const allIds = [...shelf404Ids, ...starShelfIds];
-    const fetchPromises = allIds.map(id => 
-        fetch(`https://api.lanyard.rest/v1/users/${id}`)
-            .then(res => res.json())
-            .then(data => ({ id, data: data.success ? data.data : null }))
-            .catch(() => ({ id, data: null }))
-    );
+// --- 4. UI RENDERING ---
+function initializeUI() {
+    const staffRow = document.getElementById('staff-row');
+    const starRow = document.getElementById('star-row');
+    const memberRow = document.getElementById('member-row');
 
-    const usersData = await Promise.all(fetchPromises);
+    if (staffRow) staffRow.innerHTML = '';
+    if (starRow) starRow.innerHTML = '';
+    if (memberRow) memberRow.innerHTML = '';
+
     let loadCount = 0;
-
-    usersData.forEach(({ id, data }) => {
-        const containerId = shelf404Ids.includes(id) ? 'staff-row' : 'member-row';
-        renderUserCard(id, data, containerId, loadCount);
-        loadCount++;
-    });
+    shelf404Ids.forEach(id => renderUserCard(id, globalDataMap[id], 'staff-row', loadCount++));
+    starShelfIds.forEach(id => renderUserCard(id, globalDataMap[id], 'star-row', loadCount++));
+    memberShelfIds.forEach(id => renderUserCard(id, globalDataMap[id], 'member-row', loadCount++));
 }
 
+const profCard = document.getElementById('profileCard');
 let profileTimeout;
+let currentProfileId = null;
 
 function renderUserCard(id, userData, containerId, delayIndex) {
     const container = document.getElementById(containerId);
@@ -88,6 +136,7 @@ function renderUserCard(id, userData, containerId, delayIndex) {
 
     const card = document.createElement('div');
     card.className = 'user-card';
+    card.id = `card-${id}`;
     
     const username = userData ? userData.discord_user.username : (fallbackNames[id] || "unknown");
     const status = userData ? userData.discord_status : "offline";
@@ -97,13 +146,12 @@ function renderUserCard(id, userData, containerId, delayIndex) {
 
     card.innerHTML = `
         <div class="avatar-wrapper">
-            <img src="${avatar}" class="user-avatar" alt="${username}">
-            <div class="status-dot" style="background: ${statusColors[status]}"></div>
+            <img src="${avatar}" class="user-avatar" id="avatar-${id}" alt="${username}">
+            <div class="status-dot" id="dot-${id}" style="background: ${statusColors[status]}"></div>
         </div>
         <div class="user-name">${username.toLowerCase()}</div>
     `;
 
-    // --- REDIRECT ON MAIN GRID CLICK FOR EVERYONE ---
     card.style.cursor = 'pointer';
     card.addEventListener('click', () => {
         const slug = userMapping[id];
@@ -112,12 +160,14 @@ function renderUserCard(id, userData, containerId, delayIndex) {
 
     card.addEventListener('mouseenter', (e) => {
         clearTimeout(profileTimeout);
-        openProfile(id, userData, e.clientX, e.clientY);
+        currentProfileId = id;
+        openProfile(id, globalDataMap[id], e.clientX, e.clientY);
     });
 
     card.addEventListener('mouseleave', () => {
         profileTimeout = setTimeout(() => {
             profCard.classList.remove('active');
+            currentProfileId = null;
         }, 150);
     });
 
@@ -125,39 +175,19 @@ function renderUserCard(id, userData, containerId, delayIndex) {
     setTimeout(() => card.classList.add('show'), delayIndex * 150);
 }
 
-profCard.addEventListener('mouseenter', () => clearTimeout(profileTimeout));
-profCard.addEventListener('mouseleave', () => profCard.classList.remove('active'));
+function updateUserUI(id, data) {
+    // Update Grid Elements
+    const dot = document.getElementById(`dot-${id}`);
+    if (dot) dot.style.background = statusColors[data.discord_status || 'offline'];
+
+    // Update Profile Card if it's currently showing this user
+    if (currentProfileId === id && profCard.classList.contains('active')) {
+        updateProfileCardContent(id, data);
+    }
+}
 
 function openProfile(id, data, x, y) {
-    const avatarImg = document.getElementById('profAvatar');
-    const avatarUrl = data?.discord_user?.avatar 
-        ? `https://cdn.discordapp.com/avatars/${id}/${data.discord_user.avatar}.png?size=256` 
-        : `https://cdn.discordapp.com/embed/avatars/0.png`;
-    
-    avatarImg.src = avatarUrl;
-    document.getElementById('profUsername').textContent = data ? data.discord_user.username : fallbackNames[id];
-    document.getElementById('profDot').style.background = statusColors[data?.discord_status || 'offline'];
-    
-    const discordLink = document.getElementById('profLink');
-    discordLink.href = `https://discord.com/users/${id}`;
-
-    // --- REDIRECT ON POPUP CLICK FOR EVERYONE ---
-    avatarImg.onclick = () => {
-        const slug = userMapping[id];
-        if (slug) window.location.href = `${slug}.html`;
-    };
-
-    let activityHtml = `<div class="status-text-item" style="color: #666;">No current activity</div>`;
-    if (data?.activities?.length > 0) {
-        const custom = data.activities.find(a => a.type === 4);
-        const game = data.activities.find(a => a.type === 0);
-        const spotify = data.activities.find(a => a.type === 2);
-        if (custom) activityHtml = `<div class="status-text-item">${custom.state || custom.name}</div>`;
-        else if (game) activityHtml = `<div class="status-text-item">Playing <b>${game.name}</b></div>`;
-        else if (spotify) activityHtml = `<div class="status-text-item">Listening to <b>${spotify.details}</b></div>`;
-    }
-    
-    document.getElementById('profActivity').innerHTML = activityHtml;
+    updateProfileCardContent(id, data);
     
     const cardWidth = 300;
     const cardHeight = 350;
@@ -173,9 +203,44 @@ function openProfile(id, data, x, y) {
     profCard.classList.add('active');
 }
 
-initializeHallOfFame();
+function updateProfileCardContent(id, data) {
+    const avatarImg = document.getElementById('profAvatar');
+    const avatarUrl = data?.discord_user?.avatar 
+        ? `https://cdn.discordapp.com/avatars/${id}/${data.discord_user.avatar}.png?size=256` 
+        : `https://cdn.discordapp.com/embed/avatars/0.png`;
+    
+    avatarImg.src = avatarUrl;
+    document.getElementById('profUsername').textContent = data ? data.discord_user.username : (fallbackNames[id] || "USER");
+    document.getElementById('profDot').style.background = statusColors[data?.discord_status || 'offline'];
+    
+    const discordLink = document.getElementById('profLink');
+    discordLink.href = `https://discord.com/users/${id}`;
 
-// --- MINI PLAYER (KEEPING ALL YOUR ORIGINAL LOGIC) ---
+    avatarImg.onclick = () => {
+        const slug = userMapping[id];
+        if (slug) window.location.href = `${slug}.html`;
+    };
+
+    let activityHtml = `<div class="status-text-item" style="color: #666;">No current activity</div>`;
+    if (data?.activities?.length > 0) {
+        const custom = data.activities.find(a => a.type === 4);
+        const game = data.activities.find(a => a.type === 0);
+        const spotify = data.spotify; // Use Lanyard's specific spotify object
+
+        if (custom) activityHtml = `<div class="status-text-item">${custom.state || custom.name}</div>`;
+        else if (game) activityHtml = `<div class="status-text-item">Playing <b>${game.name}</b></div>`;
+        else if (spotify) activityHtml = `<div class="status-text-item">Listening to <b>${spotify.song}</b></div>`;
+    }
+    document.getElementById('profActivity').innerHTML = activityHtml;
+}
+
+profCard.addEventListener('mouseenter', () => clearTimeout(profileTimeout));
+profCard.addEventListener('mouseleave', () => {
+    profCard.classList.remove('active');
+    currentProfileId = null;
+});
+
+// --- 5. MINI PLAYER LOGIC ---
 const bgMusic = document.getElementById('bgMusic');
 const playBtn = document.getElementById('playBtn');
 const progressBg = document.getElementById('progressBg');
@@ -226,3 +291,40 @@ document.addEventListener('click', () => {
         playBtn.innerHTML = '<i class="fas fa-pause"></i>';
     }
 }, { once: true });
+
+// --- 6. CAROUSEL AUTO-SCROLL LOGIC ---
+function setupCarousel(viewportId, trackId) {
+    const viewport = document.getElementById(viewportId);
+    const track = document.getElementById(trackId);
+    if (!viewport || !track) return;
+
+    let currentX = 0;
+    let isHovered = false;
+    const scrollSpeed = 0.6; 
+
+    viewport.addEventListener('mouseenter', () => isHovered = true);
+    viewport.addEventListener('mouseleave', () => isHovered = false);
+
+    function animate() {
+        if (!isHovered && track.children.length > 0) {
+            currentX -= scrollSpeed;
+            track.style.transform = `translateX(${currentX}px)`;
+
+            const firstCard = track.firstElementChild;
+            if (firstCard) {
+                const cardTotalWidth = firstCard.offsetWidth + 30; 
+                if (Math.abs(currentX) >= cardTotalWidth) {
+                    track.appendChild(firstCard);
+                    currentX += cardTotalWidth;
+                    track.style.transform = `translateX(${currentX}px)`;
+                }
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+}
+
+// --- 7. INITIALIZE ---
+connectLanyard();
+setupCarousel('starViewport', 'star-row');

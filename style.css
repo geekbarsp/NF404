@@ -178,3 +178,34 @@ body {
 #custom-cursor {
     pointer-events: none !important;
 }
+
+/* --- CONTINUOUS SCROLL CAROUSEL --- */
+.carousel-glass {
+    position: relative;
+    padding: 40px 20px; /* Reduced padding since buttons are gone */
+    display: flex;
+    align-items: center;
+}
+
+.carousel-viewport {
+    overflow: hidden;
+    width: 100%;
+    /* Fades the left and right edges so cards don't just abruptly cut off */
+    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+}
+
+.carousel-track {
+    display: flex;
+    gap: 30px;
+    flex-wrap: nowrap;
+    padding: 20px 0;
+    width: max-content; /* Critical: allows the track to size itself to the cards */
+    will-change: transform; /* Hardware acceleration for smooth scrolling */
+}
+
+/* Ensure the user cards don't shrink */
+.carousel-track .user-card {
+    flex: 0 0 160px;
+}
+
